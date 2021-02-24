@@ -66,24 +66,6 @@ app.use(helmet());
 app.set('view engine', 'ejs');
 app.set('views', './view');
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use((req, res, next) => {
-	let item = {
-		'ip': req.ip,
-		'service': req.protocol,
-		'request': req.method + ' ' + req.originalUrl,
-		'http_request_path': req.originalUrl,
-		'request_headers': helper.formatHeaders(req.headers)
-	};
-	if (req.hostname !== config.hostname || (req.protocol === 'http' && config.https_only)) {
-		if (req.hostname) item.request = req.method + ' ' + req.protocol + '://' + req.hostname + req.originalUrl;
-		emitData(item);
-		res.redirect((config.https_only ? 'https' : 'http') + '://' + config.hostname + req.originalUrl);
-	}
-	else {
-		emitData(item);
-		next()
-	}
-});
 app.use(express.static('static'));
 app.get('/', (req, res) => {
 	res.sendFile('view/index.html' , {root: __dirname, lastModified: false, headers: {'Cache-Control': 'no-cache, no-store, must-revalidate', 'Expires': '0'}});
