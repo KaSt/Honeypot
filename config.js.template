@@ -21,6 +21,31 @@ const config = {
 		password: 'hi-there',
 		database: 'db'
 	},
+	telnet: {
+		helloMessage: "WOPR - SECURE ACCESS ONLY - ATTEMPTS ARE LOGGED AND TRACKED\n",
+		authentication: {
+			askForUserMessage: "User:",
+			askForPasswdMessage: "Password:"
+		}
+	},
+	output: {
+		csirtg: {
+			enabled: false,
+			userId: "User",
+			feed: "Your csirtg feed id",
+			apiKey: "csirtg api key"
+		},
+		abuseipdb: {
+			enabled: false,
+			categories: "18,22",
+			apiKey: "abuseipdb api key" 
+		},
+		dshield: {
+			enabled: false,
+			batch: 100,
+			apiKey: "Your dshield api key"
+		}
+	}
 };
 
 if (config.hostname.length === 0) config.hostname = config.server_ip;

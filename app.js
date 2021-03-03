@@ -1,4 +1,16 @@
 "use strict";
+const express = require('express');
+const app = express();
+const bodyParser = require('body-parser');
+const helmet = require('helmet');
+const server = require('http').Server(app);
+const io = require('socket.io')(server);
+const escape = require('escape-html');
+const CustomSocketServer = require('./lib/server/custom-socket-server');
+const helper = require('./lib/server/helper');
+const tcp_ports = require('./lib/server/tcp-ports');
+
+const publishCsirtgIndicator = require('./lib/output/output');
 
 const chalk = require('chalk');
 let config;
@@ -8,18 +20,6 @@ try {
 	console.error(chalk.bgRed.bold('Error:') + ' config not found. Please create `./config.js` based on the `./config.js.template`.');
 	return;
 }
-
-const express = require('express');
-const app = express();
-const bodyParser = require('body-parser');
-const helmet = require('helmet');
-const server = require('http').Server(app);
-const io = require('socket.io')(server);
-const escape = require('escape-html');
-const CustomSocketServer = require('./lib/custom-socket-server');
-const IcmpEchoLogger = require('./lib/icmp-echo-logger');
-const helper = require('./lib/helper');
-const tcp_ports = require('./lib/tcp-ports');
 
 let data = [];
 let monthly_stats;
@@ -45,11 +45,6 @@ for (let port in tcp_ports) {
 	});
 }
 
-/* Catching ICMP echo requests (ping) using tcpdump */
-const ping = new IcmpEchoLogger().on('data', (data) => {
-	emitData(data);
-});
-
 /* MySQL Helper */
 (new helper.Mysql()).on('total_requests_number', (count) => {
 	total_requests_number = count;
@@ -66,24 +61,6 @@ app.use(helmet());
 app.set('view engine', 'ejs');
 app.set('views', './view');
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use((req, res, next) => {
-	let item = {
-		'ip': req.ip,
-		'service': req.protocol,
-		'request': req.method + ' ' + req.originalUrl,
-		'http_request_path': req.originalUrl,
-		'request_headers': helper.formatHeaders(req.headers)
-	};
-	if (req.hostname !== config.hostname || (req.protocol === 'http' && config.https_only)) {
-		if (req.hostname) item.request = req.method + ' ' + req.protocol + '://' + req.hostname + req.originalUrl;
-		emitData(item);
-		res.redirect((config.https_only ? 'https' : 'http') + '://' + config.hostname + req.originalUrl);
-	}
-	else {
-		emitData(item);
-		next()
-	}
-});
 app.use(express.static('static'));
 app.get('/', (req, res) => {
 	res.sendFile('view/index.html' , {root: __dirname, lastModified: false, headers: {'Cache-Control': 'no-cache, no-store, must-revalidate', 'Expires': '0'}});
@@ -103,7 +80,7 @@ app.all('*', (req, res) => {
 });
 const server_port = config.nginx_reverse_proxy === true ? config.express_js_alternative_port : 80;
 server.listen(server_port);
-console.log(chalk.green.bold(`Server running at http://${config.server_ip}:${server_port}/`));
+console.log(chalk.bgGreen.bold('Info:') + ` HTTP Server running at http://${config.server_ip}:${server_port}/`);
 
 /**
  * Emits data to the WebSocket clients and also saves it in the MySQL database
