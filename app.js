@@ -10,7 +10,7 @@ const CustomSocketServer = require('./lib/server/custom-socket-server');
 const helper = require('./lib/server/helper');
 const tcp_ports = require('./lib/server/tcp-ports');
 
-const publishCsirtgIndicator = require('./lib/output/output');
+const {publishCsirtgIndicator, publishAbuseIppDbIndicator, publishDshieldIndicator, publishOtxIndicator} = require('./lib/output/output');
 
 const chalk = require('chalk');
 let config;
